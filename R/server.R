@@ -6,7 +6,7 @@ library(shinyFiles)
 library(shinythemes)
 library(shinyjs)
 
-#setwd("C:/Users/Krissi/")
+setwd("C:/")
 
              
 server <- function(input, output, session){
@@ -44,21 +44,30 @@ server <- function(input, output, session){
           }
         )
       } else {
-        cat(input$file$datapath)
-        createReport(txt_folder = NULL, mztab_file = input$file$datapath)
+        
+        mztab_file <- input$file$datapath
+        createReport(txt_folder = NULL, mztab_file = mztab_file)
+        
         output$pdfdownload <- downloadHandler(
           filename = "Report.pdf",
           content = function(file){
-            file.copy(paste0(input$file$datapath, list.files(path = input$file$datapath, pattern = c("report.*pdf"))), file)
+            file.copy(paste0(dirname(input$file$datapath), "\\", list.files(path = dirname(input$file$datapath), pattern = c("report.*pdf"))), file)
           }
         )
+        getPage<-function() {
+          return(includeHTML(paste0(dirname(input$file$datapath), "\\", list.files(path = dirname(input$file$datapath), pattern = "report.*html"))))
+        }
+        output$htmlpage<-renderUI({getPage()})
       }
     })
   })
   
 }
 
-#createReport(txt_folder = NULL, mztab_file = "C:/Users/Krissi/Desktop/bachelorarbeit/test ptxcq/example.mzTab")
+shinyApp(ui,server)
+
+# mztab_file <- "C:/Users/Krissi/Desktop/bachelorarbeit/test ptxcq/example.mzTab"
+# createReport(txt_folder = NULL, mztab_file = mztab_file)
 
 
 ##instead of getwd( maybe C:?
