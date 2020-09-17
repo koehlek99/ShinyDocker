@@ -1,3 +1,16 @@
+list.of.packages <- c("shiny", "PTXQC", "dplyr", "shinycssloaders", "shinyFiles", "shinythemes", "shinyjs")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages, dependencies = TRUE)
+
+
+library(shiny)
+library(PTXQC)
+library(dplyr)
+library(shinycssloaders)
+library(shinyFiles)
+library(shinythemes)
+library(shinyjs)
+
 
 ui <- fluidPage(
   
@@ -26,7 +39,12 @@ ui <- fluidPage(
                          ),
           conditionalPanel(condition = "input.dtype == 'Mztab file'",
                            fileInput("file", "Choose file", accept = ".mzTab")
-          ), 
+          ),
+          
+          checkboxInput("yaml", "Add a yaml file"),
+          
+          uiOutput("yaml.load"),
+          
           br(),
           fluidRow(align = "center", 
                    actionButton("creport", "Create report") 
@@ -43,8 +61,6 @@ ui <- fluidPage(
                            )
           
             
-          
-          #heatmap
         )
       )
     ),
