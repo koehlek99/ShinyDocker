@@ -1,7 +1,9 @@
-list.of.packages <- c("shiny", "PTXQC", "dplyr", "shinycssloaders", "shinyFiles", "shinythemes", "shinyjs", "magrittr")
+list.of.packages <- c("shiny", "devtools", "dplyr", "shinycssloaders", "shinyFiles", "shinythemes", "shinyjs", "magrittr")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages, dependencies = TRUE)
 
+library(devtools)
+install_github("cbielow/PTXQC", dependencies = TRUE, build_vignettes = TRUE)
 
 library(shiny)
 library(PTXQC)
@@ -16,7 +18,7 @@ library(shinyjs)
 ui <- fluidPage(
   
   
-  navbarPage("Proteomix Quality Control Report", theme = shinytheme("flatly"),
+  navbarPage("Proteomics Quality Control Report", theme = shinytheme("flatly"),
     
     tabPanel("Report", fluid = TRUE, #icon =icon()
       sidebarLayout(
@@ -31,7 +33,7 @@ ui <- fluidPage(
                            htmlOutput("choose.dir"),
                            fluidRow( 
                              column(3, 
-                                    shinyDirButton("dir", "Browse...", "Choose a directory")
+                                    uiOutput("dirbutton")
                              ), 
                              column(9, 
                                     verbatimTextOutput("dir.txt", placeholder = T)
@@ -47,18 +49,24 @@ ui <- fluidPage(
           uiOutput("yaml.load"),
           
           br(),
-          fluidRow(align = "center", 
-                   actionButton("creport", "Create report") 
-          )
-            
+          fluidRow(
+            column(3, actionButton("creport", "Create report", style='padding:5px; font-size:80%')),
+            conditionalPanel("output.created", 
+              column(4,
+                     uiOutput("pdfd")
+                    ), 
+              column(4, 
+                     uiOutput("yamld")
+                    )
+            )
+          ),
+          
+          br()
+          
         ),
         mainPanel(
           conditionalPanel(condition = "input.creport == 1",
-                           fluidRow(align = "center",
-                                    downloadButton("pdfdownload", "Download as PDF") %>% withSpinner(type = 5, color = "#0dc5c1")
-                           ),
-                           br(),
-                           htmlOutput("htmlpage")
+                           htmlOutput("htmlpage") %>% withSpinner(type = 5, color = "#0dc5c1")
                            )
           
             
