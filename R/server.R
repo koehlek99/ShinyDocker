@@ -8,6 +8,7 @@ server <- function(input, output, session){
   output$dirbutton <- renderUI({
     shinyDirButton("dir", "Browse...", "Choose a directory") #, style = 'padding:3px; font-size:80%')
   })
+  
   ##choosing MaxQuant directory
   shinyDirChoose(input,"dir", session=session,roots=c(wd=getwd()))
    
@@ -15,14 +16,30 @@ server <- function(input, output, session){
   output$dir.txt <- renderText({
     parseDirPath(roots=c(wd=getwd()), input$dir)
   })
+
   
-  
-  ##loading .yaml file
-  output$yaml.load <- renderUI({
-    if(input$yaml){
-      fileInput("yamlfile", "Choose yaml file")
+  ##advanced settings
+  output$adv.set <- renderUI({
+    if(input$settings){
+      tagList(
+        sliderInput("Thresh_ID_rate", "ID rate treshhold", 0, 50, c(20,35), width = "50%"),
+        numericInput("PG_LabelIncTresh_num", "Protein Groups: ratio plot- label inc treshhold", 4, width = "20%"),
+        numericInput("PG_IntensityThreshLog2_num", "Protein groups: Intensity log2-threshhold", 25, width = "20%"),
+        numericInput("EVD_ProteinCountThresh_num", "Evidence: Protein counts threshhold", 3500, width = "20%"),
+        numericInput("EVD_IntensityThreshLog2_num", "Evidence: Intensity log2-threshhold", 23, width = "20%"),
+        numericInput("EVD_PeptideCountThresh_num", "Evidence: Peptide counts treshhold", 15000, width = "20%"),
+        numericInput("EVD_MQpar_MatchingTimeWindow_num", "MQ parameter- Matching time window", 0.7, width = "20%"),
+        selectInput("EVD_MatchBetweenRuns_wA", "Match between runs", c("yes", "no", "auto"), "auto", width = "20%"),
+        numericInput("EVD_MQpar_firstSearchTol_num", "MQ parameter- First search tol", 20, width = "50%"),
+        numericInput("EVD_firstSearch_outOfCalWarnSD_num", "first search outofcal warnsd", 2, width = "20%"),
+        numericInput("EVD_mainSearchTol_num", "main search tol", 4.5, width = "20%"),
+        numericInput("MsMsScans_IonInjectionTresh_num", "MsMs Scans: Ion injection time treshhold", 10, width = "20%")
+      )
+      
     }
   })
+  
+
   
   output$pdfd <- renderUI({
     downloadButton("pdfdownload", "Download as PDF", style='padding:3px; font-size:80%')
@@ -30,6 +47,8 @@ server <- function(input, output, session){
   output$yamld <- renderUI({
     downloadButton("yamldownload", "Download as PDF", style='padding:3px; font-size:80%') 
   })
+  
+  w <- Waiter$new()
   
   ##creating report
   observeEvent(input$creport, {
@@ -44,12 +63,12 @@ server <- function(input, output, session){
         files <- dir(path.old)
         file.copy(paste0(path.old, sep, files), paste0(path.new, sep, files))
         
-        ##check if .yaml file was load
-        if(input$yaml) yaml.obj <- yaml.load_file(input$yaml$datapath)
-        else  yaml.obj <- list()
+        yaml.obj <- list()
         
         #create report for MaxQuant files 
+        w$show()
         createReport(txt_folder = path.new, mztab_file = NULL, yaml_obj = yaml.obj)
+        w$hide()
         
         ##function for html report output
         getPage<-function() {
@@ -83,13 +102,13 @@ server <- function(input, output, session){
       } else {
         
         mztab_file <- input$file$datapath
-        
-        ##check if .yaml file was load
-        if(input$yaml) yaml.obj <- yaml.load_file(input$yaml$datapath)
-        else yaml.obj <- list()
+        yaml.obj <- list()
         
         ##creating report for mztab file
+        w$show()
         createReport(txt_folder = NULL, mztab_file = mztab_file, yaml_obj = yaml.obj)
+        w$hide()
+        
         
         ##funtions for html report output
         getPage<-function() {
@@ -130,3 +149,4 @@ shinyApp(ui,server)
 ##input$file file path mztab
 
 
+#getMetricsObject und ordnen
