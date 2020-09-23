@@ -49,8 +49,27 @@ ui <- fluidPage(
                            fileInput("file", "Choose file", accept = ".mzTab")
           ),
           
-          checkboxInput("settings", "Show advanced settings"),
-          uiOutput("adv.set"),
+          checkboxInput("showsets", "Adjust advanced settings"),
+          
+          conditionalPanel(condition = "input.showsets",
+                           selectInput("settings", label = "How?", choices = c( "Change settings manually", "Upload yaml file")), 
+                           conditionalPanel(condition = "input.showsets && input.settings == 'Upload yaml file'", 
+                                            uiOutput("yaml.load")),
+                           conditionalPanel(condition = "input.settings == 'Change settings manually'",
+                                            uiOutput("adv.set1"),
+                                            fluidRow(
+                                              column(6, 
+                                                     uiOutput("adv.set2")
+                                                     ),
+                                              column(6, 
+                                                     uiOutput("adv.set3")
+                                                     )
+                                              
+                                            )
+                           )
+          ),
+          
+
           
           br(),
           fluidRow(
@@ -72,6 +91,7 @@ ui <- fluidPage(
           
         ),
         mainPanel(
+          
           conditionalPanel(condition = "input.creport == 1",
                            htmlOutput("htmlpage") #%>% withSpinner(type = 5, color = "#0dc5c1")
                            )
