@@ -1,3 +1,7 @@
+lst_qcMetrics <- PTXQC:::getMetricsObjects(FALSE)
+df.meta <- PTXQC:::getMetaData(lst_qcMetrics = lst_qcMetrics)
+lst_qcMetrics_ord <- gsub("qcMetric_", "", names(lst_qcMetrics[df.meta$.id]))
+
 server <- function(input, output, session){
   
   if(.Platform$OS.type == "windows") sep <- "\\"
@@ -14,7 +18,7 @@ server <- function(input, output, session){
    
   output$choose.dir <- renderText({"<b>Choose directory</b>"})
   output$dir.txt <- renderText({
-    parseDirPath(roots=c(wd=getwd()), input$dir)
+    paste0(basename(parseDirPath(roots=c(wd=getwd()), input$dir)), "/")
   })
 
   ##loading .yaml file
@@ -41,7 +45,7 @@ server <- function(input, output, session){
       numericInput("EVD_PeptideCountThresh_num", "Peptide counts", 15000, width = "100%"),
       numericInput("EVD_mainSearchTol_num", "main search tol", 4.5, width = "100%"),
       numericInput("EVD_firstSearch_outOfCalWarnSD_num", "FS outofcal warnsd", 2, width = "100%"),
-      textInput("special_contaminants", "Contaminant and threshhold", "Mycoplasma: 1%"),
+      textInput("special_contaminants", "Contaminant and threshhold (in %)", "MYCOPLASMA: 1"),
       renderUI({HTML("<br/>")}),
       renderText({"MsMs Scans: "}), 
       numericInput("MsMsScans_IonInjectionTresh_num", "Ion injection time", 10, width = "100%")
@@ -62,10 +66,95 @@ server <- function(input, output, session){
     )
   })
   
-  output$adv.set4 <- renderUI({
-    
-  })
 
+  
+#######################################################################################################################
+##############writing parameters into yaml file (from PTXQC createReport)
+#######################################################################################################################
+  
+  build.yaml <- function(path.new){
+    
+              #browser()
+    
+              yc = YAMLClass$new(list())
+  
+              param_useMQPAR = yc$getYAML("PTXQC$UseLocalMQPar", TRUE)
+              
+              add_fs_col = yc$getYAML("PTXQC$NameLengthMax_num", 14)
+              
+              cat(input$Tresh_ID_rate[1])
+              id_rate_bad = yc$getYAML("File$Summary$IDRate$Thresh_bad_num", input$Thresh_ID_rate[1], 0, 100)
+              id_rate_great = yc$getYAML("File$Summary$IDRate$Thresh_great_num",input$Thresh_ID_rate[2], 0, 100)
+              
+              GL_name_min_length = 8
+              
+              pg_ratioLabIncThresh = yc$getYAML("File$ProteinGroups$RatioPlot$LabelIncThresh_num", input$PG_LabelIncTresh_num)
+              ## default median intensity in log2 scale
+              param_PG_intThresh = yc$getYAML("File$ProteinGroups$IntensityThreshLog2_num", input$PG_IntensityThreshLog2_num, 1, 100)
+              
+              ## get scoring threshold (upper limit)
+              param_EV_protThresh = yc$getYAML("File$Evidence$ProteinCountThresh_num", input$EVD_ProteinCountThresh_num, 1, 1e5)
+              
+              ## default median intensity in log2 scale
+              param_EV_intThresh = yc$getYAML("File$Evidence$IntensityThreshLog2_num", input$EVD_IntensityThreshLog2_num, 1, 100)
+              
+              ## get scoring threshold (upper limit)
+              param_EV_pepThresh = yc$getYAML("File$Evidence$PeptideCountThresh_num", input$EVD_PeptideCountThresh_num, 1, 1e6)
+              
+              ### warn of special contaminants!
+              ## these need to be in FASTA headers (description is not enough)!
+              ## syntax:  list( contaminant1 = c(name, threshold), contaminant2 = c(...), ...)
+              ##
+              ##  if within the YAML file
+              ##    SpecialContaminants: no
+              ##  is set, then 'yaml_contaminants' will be 'FALSE'
+              ##
+              contaminant_default = list("cont_MYCO" = c(name="MYCOPLASMA", threshold=1))# name (FASTA), threshold for % of unique peptides
+              
+              contaminant_list <- strsplit(input$special_contaminants, ";")
+              contaminant_list <- unlist(contaminant_list)
+              contaminants <- list()
+              for(c in (1:length(contaminant_list))){
+                cont <- unlist(strsplit(contaminant_list[c], ":"))
+                cont_name <- paste0("cont_", cont[1])
+                contaminants[[cont_name]] <- c(name = cont[1], threshold = as.integer(cont[2]))
+              }
+
+              
+              ##contaminant_default = FALSE ## to switch it off by default
+              yaml_contaminants = yc$getYAML("File$Evidence$SpecialContaminants", contaminants)
+              
+              param_EV_MatchingTolerance = yc$getYAML("File$Evidence$MQpar_MatchingTimeWindow_num", input$EVD_MQpar_MatchingTimeWindow_num)
+
+              param_evd_mbr = yc$getYAML("File$Evidence$MatchBetweenRuns_wA", input$EVD_MatchBetweenRuns_wA)
+              
+              param_EV_PrecursorTolPPM = yc$getYAML("File$Evidence$MQpar_firstSearchTol_num", input$EVD_MQpar_firstSearchTol_num)
+              
+              param_EV_PrecursorOutOfCalSD = yc$getYAML("File$Evidence$firstSearch_outOfCalWarnSD_num", input$EVD_firstSearch_outOfCalWarnSD_num)
+              
+              ## we do not dare to have a default, since it ranges from 6 - 4.5 ppm across MQ versions
+              param_EV_PrecursorTolPPMmainSearch = yc$getYAML("File$Evidence$MQpar_mainSearchTol_num", input$EVD_mainSearchTol_num)
+              if (is.na(param_EV_PrecursorTolPPMmainSearch))
+              {
+                warning("PTXQC: Cannot draw borders for calibrated mass error, since neither 'File$Evidence$MQpar_mainSearchTol_num' is set nor a mqpar.xml file is present!", immediate. = TRUE)
+              }
+              
+              param_MSMSScans_ionInjThresh = yc$getYAML("File$MsMsScans$IonInjectionThresh_num", input$MsMsScans_IonInjectionTresh_num, 0, 200)
+              
+              df.meta <- df.meta[,c("order", ".id")]
+              mets <- paste0("qcMetric_", input$metrics)
+              for(i in 1:nrow(df.meta)){
+                pname = paste0("order$", df.meta$.id[i])
+                pval = df.meta$order[i]
+                if(df.meta$.id[i] %in% mets) yc$getYAML(pname, pval)
+                else yc$getYAML(pname, (-1))
+              }
+              
+              yc$writeYAML(paste0(path.new, sep, "yaml_input"))
+         
+  }
+#######################################################################################################################
+#######################################################################################################################
   
   output$pdfd <- renderUI({
     downloadButton("pdfdownload", "Download as PDF", style='padding:3px; font-size:80%')
@@ -74,7 +163,9 @@ server <- function(input, output, session){
     downloadButton("yamldownload", "Download yaml", style='padding:3px; font-size:80%') 
   })
   
-  w <- Waiter$new()
+  w <- Waiter$new(html = tagList(spin_6(),
+                                HTML("<br/>"),
+                                div("Creating the report can take a few minutes...")))
   
   ##creating report
   observeEvent(input$creport, {
@@ -91,6 +182,10 @@ server <- function(input, output, session){
         
         ##check if .yaml file was load
         if(!is.null(input$yamlfile)) yaml.obj <- yaml.load_file(input$yamlfile$datapath)
+        if(input$settings == "Change settings manually") {
+          build.yaml(path.new)
+          yaml.obj <- yaml.load_file(paste0(path.new, sep, "yaml_input"))
+        }
         else  yaml.obj <- list()
         
         #create report for MaxQuant files 
@@ -104,9 +199,24 @@ server <- function(input, output, session){
           output$created <- reactive(return(1))
           outputOptions(output, "created", suspendWhenHidden = FALSE)
           addResourcePath("lib", path.new)
-          print((tags$iframe(src = paste0("lib", sep, list.files(path = path.new, pattern = "report.*html")), height = 550, width = "100%", seamless = "seamless")))
+          
+          tags <- tags$html(tags$iframe(src = paste0("lib", sep, list.files(path = path.new, pattern = "report.*html")),
+                                   width = "100%",
+                                   height = "500",
+                                   seamless = "seamless",
+                                   scrolling = 'yes',
+                                   id = 'htmlframe',
+                                   frameBorder = 0)
+                            )
+    
+          
+          print(tags)
         }
         
+        ##close settings due to layout 
+        updateCheckboxInput(session, "showsets", value = 0)
+        
+        ##generate html output
         output$htmlpage<-renderUI({getPage()})
 
         
@@ -133,6 +243,10 @@ server <- function(input, output, session){
 
         ##check if .yaml file was load
         if(!is.null(input$yamlfile)) yaml.obj <- yaml.load_file(input$yamlfile$datapath)
+        if(input$settings == "Change settings manually") {
+          build.yaml(dirname(input$file$datapath))
+          yaml.obj <- yaml.load_file(paste0(dirname(input$file$datapath), sep, "yaml_input"))
+        }
         else  yaml.obj <- list()
         
         ##creating report for mztab file
@@ -147,7 +261,14 @@ server <- function(input, output, session){
           outputOptions(output, "created", suspendWhenHidden = FALSE)
           
           addResourcePath("lib", dirname(input$file$datapath))
-          print((tags$iframe(src = paste0("lib", sep, list.files(path = dirname(input$file$datapath), pattern = "report.*html")), height = 550, width = "100%", seamless = "seamless")))
+          print(tags$iframe(src = paste0("lib", sep, list.files(path = dirname(input$file$datapath), pattern = "report.*html")), 
+                            height = 500, 
+                            width = "100%", 
+                            seamless = "seamless",
+                            scrolling = "yes",
+                            id = "htmlframe",
+                            frameBorder = 0)
+                )
         }
         
         output$htmlpage<-renderUI({getPage()})
@@ -172,6 +293,7 @@ server <- function(input, output, session){
   })
   
 }
+
 
 shinyApp(ui,server)
 

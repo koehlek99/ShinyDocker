@@ -19,6 +19,7 @@ library(yaml)
 library(shinyjs)
 library(waiter)
 
+
 ui <- fluidPage(
   
   use_waiter(), 
@@ -65,9 +66,12 @@ ui <- fluidPage(
                                                      uiOutput("adv.set3")
                                                      )
                                               
-                                            )
+                                            ),
+                                              
+                                            checkboxGroupInput("metrics", "Computed metrics", choices = lst_qcMetrics_ord, selected = lst_qcMetrics_ord)
                            )
           ),
+          
           
 
           
@@ -78,12 +82,19 @@ ui <- fluidPage(
                    ),
 
             conditionalPanel("output.created", 
-              column(4,
-                     uiOutput("pdfd")
-                    ), 
-              column(4, 
-                     uiOutput("yamld")
-                    )
+
+              fluidRow(
+                column(4,
+                       uiOutput("pdfd")
+                      ), 
+                column(4, 
+                       uiOutput("yamld")
+                      )
+              ),
+              fluidRow(
+                #br(),
+                #textOutput("scroll")
+              )
             )
           ),
           
