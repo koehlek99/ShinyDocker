@@ -23,6 +23,7 @@ library(waiter)
 ui <- fluidPage(
   
   use_waiter(), 
+  useShinyjs(),
   
   navbarPage("Proteomics Quality Control Report", theme = shinytheme("flatly"),
     
@@ -30,7 +31,8 @@ ui <- fluidPage(
       sidebarLayout(
       
         sidebarPanel(
-          titlePanel("Load your dataset"),
+          
+          titlePanel(textOutput("title")),
           
           selectInput("dtype", "Data type",
                       c("MaxQuant output folder", "Mztab file")),
@@ -76,27 +78,29 @@ ui <- fluidPage(
 
           
           br(),
-          fluidRow(
-            column(3, 
-                   actionButton("creport", "Create report", style='padding:5px; font-size:80%')
-                   ),
 
-            conditionalPanel("output.created", 
 
-              fluidRow(
-                column(4,
-                       uiOutput("pdfd")
-                      ), 
-                column(4, 
-                       uiOutput("yamld")
-                      )
-              ),
-              fluidRow(
-                #br(),
-                #textOutput("scroll")
-              )
-            )
+          actionButton("creport", "Create report"),
+
+          br(), 
+          br(),
+          conditionalPanel("output.created", 
+
+                fluidRow(align = "center",
+                         uiOutput("pdfd")
+                ),
+                br(),
+                fluidRow(align = "center",
+                         uiOutput("yamld")
+                ),
+                br(),
+                br(),
+                fluidRow(align = "center",
+                  uiOutput("newreport")
+                )
+             
           ),
+          
           
           br()
           
@@ -104,7 +108,7 @@ ui <- fluidPage(
         mainPanel(
           
           conditionalPanel(condition = "input.creport == 1",
-                           htmlOutput("htmlpage") #%>% withSpinner(type = 5, color = "#0dc5c1")
+                           htmlOutput("htmlpage") 
                            )
           
             

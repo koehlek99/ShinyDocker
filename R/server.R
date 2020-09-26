@@ -9,6 +9,11 @@ server <- function(input, output, session){
   
   setwd(sep)
   
+  output$title <- renderText({
+    if(input$creport) "Download files"
+    else "Upload your data"
+  })
+  
   output$dirbutton <- renderUI({
     shinyDirButton("dir", "Browse...", "Choose a directory") #, style = 'padding:3px; font-size:80%')
   })
@@ -157,10 +162,10 @@ server <- function(input, output, session){
 #######################################################################################################################
   
   output$pdfd <- renderUI({
-    downloadButton("pdfdownload", "Download as PDF", style='padding:3px; font-size:80%')
+    downloadButton("pdfdownload", "Download as PDF")
   })
   output$yamld <- renderUI({
-    downloadButton("yamldownload", "Download yaml", style='padding:3px; font-size:80%') 
+    downloadButton("yamldownload", "Download yaml file") 
   })
   
   w <- Waiter$new(html = tagList(spin_6(),
@@ -182,6 +187,7 @@ server <- function(input, output, session){
         
         ##check if .yaml file was load
         if(!is.null(input$yamlfile)) yaml.obj <- yaml.load_file(input$yamlfile$datapath)
+        ##check if settings were set manually
         if(input$settings == "Change settings manually") {
           build.yaml(path.new)
           yaml.obj <- yaml.load_file(paste0(path.new, sep, "yaml_input"))
@@ -235,7 +241,8 @@ server <- function(input, output, session){
             file.copy(paste0(path.new, list.files(path = path.new, pattern = "report.*yaml")), file)
           }
         )
-          
+        
+        
         
       } else {
         
@@ -243,6 +250,7 @@ server <- function(input, output, session){
 
         ##check if .yaml file was load
         if(!is.null(input$yamlfile)) yaml.obj <- yaml.load_file(input$yamlfile$datapath)
+        ##check if settings were set manually
         if(input$settings == "Change settings manually") {
           build.yaml(dirname(input$file$datapath))
           yaml.obj <- yaml.load_file(paste0(dirname(input$file$datapath), sep, "yaml_input"))
@@ -289,7 +297,20 @@ server <- function(input, output, session){
           }
         )
       }
+      
+      hideElement("dtype")  
+      hideElement("dirbutton")
+      hideElement("dir.txt")
+      hideElement("file")
+      hideElement("showsets")
+      hideElement("choose.dir")
+      hideElement("creport")
+      
     })
+  })
+  
+  output$newreport <- renderUI({
+    actionButton("newreport", "Create new report")
   })
   
 }
