@@ -1,4 +1,4 @@
-list.of.packages <- c("shiny", "devtools", "dplyr", "shinycssloaders", "shinyFiles", "shinythemes", "shinyjs", "magrittr", "yaml", "waiter")
+list.of.packages <- c("shiny", "devtools", "dplyr", "shinycssloaders", "shinyFiles", "shinythemes", "shinyjs", "magrittr", "yaml", "waiter", "shinyBS")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages, dependencies = TRUE)
 
@@ -18,12 +18,14 @@ library(shinyjs)
 library(yaml)
 library(shinyjs)
 library(waiter)
+library(shinyBS)
 
 
 ui <- fluidPage(
   
   use_waiter(), 
   useShinyjs(),
+  
   
   navbarPage("Proteomics Quality Control Report", theme = shinytheme("flatly"),
     
@@ -59,7 +61,13 @@ ui <- fluidPage(
                            conditionalPanel(condition = "input.showsets && input.settings == 'Upload yaml file'", 
                                             uiOutput("yaml.load")),
                            conditionalPanel(condition = "input.settings == 'Change settings manually'",
+                                            
+                                            tags$style(".popover{
+                                                          max-width: 100%;
+                                                       }"),
                                             uiOutput("adv.set1"),
+                                            #bsTooltip(id="adv.set1",title="Hello! This is a hover pop-up. You'll have to click to see the next one.", placement = right, trigger = "hover"),
+                                            
                                             fluidRow(
                                               column(6, 
                                                      uiOutput("adv.set2")
@@ -70,7 +78,7 @@ ui <- fluidPage(
                                               
                                             ),
                                               
-                                            checkboxGroupInput("metrics", "Computed metrics", choices = lst_qcMetrics_ord, selected = lst_qcMetrics_ord)
+                                            checkboxGroupInput("metrics", "Compute metrics", choices = lst_qcMetrics_ord, selected = lst_qcMetrics_ord)
                            )
           ),
           
@@ -80,23 +88,25 @@ ui <- fluidPage(
           br(),
 
 
-          actionButton("creport", "Create report"),
+          div(id = "reset", actionButton("creport", "Create report")),
 
-          br(), 
-          br(),
           conditionalPanel("output.created", 
 
-                fluidRow(align = "center",
-                         uiOutput("pdfd")
+
+                br(),
+                fluidRow(
+                         column(6, 
+                                uiOutput("yamld")
+                         ),
+                         column(6, 
+                                uiOutput("pdfd")
+                                )
                 ),
                 br(),
-                fluidRow(align = "center",
-                         uiOutput("yamld")
-                ),
                 br(),
                 br(),
                 fluidRow(align = "center",
-                  uiOutput("newreport")
+                         uiOutput("newreport")
                 )
              
           ),
