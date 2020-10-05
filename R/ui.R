@@ -29,7 +29,7 @@ ui <- fluidPage(
   
   navbarPage("Proteomics Quality Control Report", theme = shinytheme("flatly"),
     
-    tabPanel("Report", fluid = TRUE, #icon =icon()
+    tabPanel("Report", fluid = TRUE, icon =icon("file-alt"),
       sidebarLayout(
       
         sidebarPanel(
@@ -95,11 +95,14 @@ ui <- fluidPage(
 
                 br(),
                 fluidRow(
-                         column(6, 
+                         column(4, 
                                 uiOutput("yamld")
-                         ),
-                         column(6, 
+                                ),
+                         column(4, 
                                 uiOutput("pdfd")
+                                ), 
+                         column(4, 
+                                uiOutput("htmld")
                                 )
                 ),
                 br(),
@@ -127,9 +130,10 @@ ui <- fluidPage(
     ),
     
       
-    tabPanel("Help", fluid = TRUE, icon("question-circle")),
+    tabPanel("Help", fluid = TRUE, icon = icon("question-circle"),
+             uiOutput("infoptxqc")),
     
-    tabPanel("About", fluid = TRUE, icon("question-circle"))
+    tabPanel("About", fluid = TRUE, icon = icon("info-circle"))
   
   )
 )
