@@ -5,7 +5,7 @@ if(length(new.packages)) install.packages(new.packages, dependencies = TRUE)
 library(devtools)
 install_github("cbielow/PTXQC", dependencies = TRUE, build_vignettes = TRUE)
 
-install_local(path = "C:/Users/Krissi/Desktop/bachelorarbeit/PTXQC code/")
+#install_local(path = "C:/Users/Krissi/Desktop/bachelorarbeit/PTXQC code/")
 
 library(shiny)
 library(PTXQC)
@@ -21,7 +21,7 @@ library(waiter)
 library(shinyBS)
 
 
-ui <- fluidPage(
+shinyUI(fluidPage(
   
   use_waiter(), 
   useShinyjs(),
@@ -88,7 +88,7 @@ ui <- fluidPage(
           br(),
 
 
-          div(id = "reset", actionButton("creport", "Create report")),
+          actionButton("creport", "Create report"),
 
           conditionalPanel("output.created", 
 
@@ -136,5 +136,5 @@ ui <- fluidPage(
     tabPanel("About", fluid = TRUE, icon = icon("info-circle"))
   
   )
-)
+))
 

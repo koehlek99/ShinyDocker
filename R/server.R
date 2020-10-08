@@ -1,5 +1,5 @@
 
-server <- function(input, output, session){
+shinyServer(function(input, output, session){
   
   if(.Platform$OS.type == "windows") sep <- "\\"
   else sep <- "/"
@@ -98,28 +98,29 @@ server <- function(input, output, session){
       }
     }
     
-    param_list <- list(c("param_useMQPAR", "PTXQC$UseLocalMQPar", TRUE),
-                     c("add_fs_col", "PTXQC$NameLengthMax_num", 14),
-                     c("id_rate_bad", "File$Summary$IDRate$Thresh_bad_num", input$Thresh_ID_rate[1], 0, 100),
-                     c("id_rate_great", "File$Summary$IDRate$Thresh_great_num", input$Thresh_ID_rate[2], 0, 100),
-                     c("pg_ratioLabIncThresh", "File$ProteinGroups$RatioPlot$LabelIncThresh_num", input$PG_LabelIncTresh_num),
-                     c("param_PG_intThresh", "File$ProteinGroups$IntensityThreshLog2_num", input$PG_IntensityThreshLog2_num, 1, 100),
-                     c("param_EV_protThresh", "File$Evidence$ProteinCountThresh_num", input$EVD_ProteinCountThresh_num, 1, 1e5),
-                     c("param_EV_intThresh", "File$Evidence$IntensityThreshLog2_num", input$EVD_IntensityThreshLog2_num, 1, 100),
-                     c("param_EV_pepThresh", "File$Evidence$PeptideCountThresh_num", input$EVD_PeptideCountThresh_num, 1, 1e6),
-                     c("yaml_contaminants", "File$Evidence$SpecialContaminants", contaminants),
-                     c("param_EV_MatchingTolerance", "File$Evidence$MQpar_MatchingTimeWindow_num", input$EVD_MQpar_MatchingTimeWindow_num),
-                     c("param_evd_mbr", "File$Evidence$MatchBetweenRuns_wA", input$EVD_MatchBetweenRuns_wA),
-                     c("param_EV_PrecursorTolPPM", "File$Evidence$MQpar_firstSearchTol_num", input$EVD_MQpar_firstSearchTol_num),
-                     c("param_EV_PrecursorOutOfCalSD", "File$Evidence$firstSearch_outOfCalWarnSD_num", input$EVD_firstSearch_outOfCalWarnSD_num),
-                     c("param_EV_PrecursorTolPPMmainSearch", "File$Evidence$MQpar_mainSearchTol_num", input$EVD_mainSearchTol_num),
-                     c("param_MSMSScans_ionInjThresh", "File$MsMsScans$IonInjectionThresh_num", input$MsMsScans_IonInjectionTresh_num, 0, 200),
-                     c("param_OutputFormats", "PTXQC$OutputFormats", c("html", "plainPDF")),
-                     c("param_PageNumbers", "PTXQC$PlainPDF$AddPageNumbers", "on")
-    )
+    param <- list()
+    param$param_useMQPAR <- TRUE
+    param$add_fs_col <- 14 
+    param$id_rate_bad <- input$Thresh_ID_rate[1]
+    param$id_rate_great <- input$Thresh_ID_rate[2]
+    param$pg_ratioLabIncThresh <- input$PG_LabelIncTresh_num
+    param$param_PG_intThresh <- input$PG_IntensityThreshLog2_num
+    param$param_EV_protThresh <- input$EVD_ProteinCountThresh_num
+    param$param_EV_intThresh <- input$EVD_ProteinCountThresh_num
+    param$param_EV_pepThresh <- input$EVD_PeptideCountThresh_num
+    param$yaml_contaminants <- contaminants
+    param$param_EV_MatchingTolerance <- input$EVD_MQpar_MatchingTimeWindow_num
+    param$param_evd_mbr <- input$EVD_MatchBetweenRuns_wA
+    param$param_EV_PrecursorTolPPM <- input$EVD_MQpar_firstSearchTol_num
+    param$param_EV_PrecursorOutOfCalSD <- input$EVD_firstSearch_outOfCalWarnSD_num
+    param$param_EV_PrecursorTolPPMmainSearch <- input$EVD_mainSearchTol_num
+    param$param_MSMSScans_ionInjThresh <- input$MsMsScans_IonInjectionTresh_num
+    param$param_OutputFormats <- c("html", "plainPDF")
+    param$param_PageNumbers <- "on"
+
     
-    createYAML(yc = yc, path = path.new, DEBUG_PTXQC = FALSE, get_parameters = FALSE, 
-               metrics = mets, par_list = param_list)
+    createYaml(yc = yc, path = path.new, DEBUG_PTXQC = FALSE, output = FALSE, 
+               metrics = mets, param = param)
   }
   
 ###############################################################################
@@ -324,7 +325,7 @@ server <- function(input, output, session){
             HTML("<br/><br/>The code of the PTXQC package is available on Github "), ptxqcgithub,
             HTML("<br/>The code of this Shiny application is available on Github "), shinygithub)
   })
-}
+})
 
 
 shinyApp(ui,server)
