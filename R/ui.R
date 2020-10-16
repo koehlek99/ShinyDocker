@@ -1,4 +1,4 @@
-list.of.packages <- c("shiny", "devtools", "dplyr", "shinycssloaders", "shinyFiles", "shinythemes", "shinyjs", "magrittr", "yaml", "waiter", "shinyBS")
+list.of.packages <- c("shiny", "devtools", "dplyr", "shinyFiles", "shinythemes", "shinyjs", "magrittr", "yaml", "waiter", "shinyBS")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages, dependencies = TRUE)
 
@@ -11,7 +11,6 @@ library(shiny)
 library(PTXQC)
 library(dplyr)
 library(magrittr)
-library(shinycssloaders)
 library(shinyFiles)
 library(shinythemes)
 library(shinyjs)
