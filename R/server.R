@@ -326,5 +326,5 @@ shinyServer(function(input, output, session){
 })
 
 
-shinyApp(ui = shinyUI(),server = shinyServer())
+shinyApp(ui = shinyUI,server = shinyServer)
 
