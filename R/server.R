@@ -44,7 +44,7 @@ shinyServer(function(input, output, session){
   output$adv.set2 <- renderUI({
     tagList(
       renderText({"Protein groups: "}), 
-      tipify(numericInput("PG_LabelIncTresh_num", "label inc", 4, width = "100%"), title = "label incorporation [%]", placement = "right"),
+      tipify(numericInput("PG_LabelIncTresh_num", "label inc", 4, width = "100%"), title = "threshold for label incorporation ratio", placement = "right"),
       renderUI({HTML("<br/>")}),
       renderText({"Evidence: "}),
       tipify(numericInput("EVD_ProteinCountThresh_num", "Protein counts", 3500, width = "100%"), title = "target threshold for protein counts", placement = "right"),
