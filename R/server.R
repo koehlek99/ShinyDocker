@@ -1,4 +1,4 @@
-shinyServer(function(input, output, session){
+server <- function(input, output, session){
   
   if(.Platform$OS.type == "windows") sep <- "\\"
   else sep <- "/"
@@ -50,7 +50,7 @@ shinyServer(function(input, output, session){
       tipify(numericInput("EVD_ProteinCountThresh_num", "Protein counts", 3500, width = "100%"), title = "target threshold for protein counts", placement = "right"),
       tipify(numericInput("EVD_PeptideCountThresh_num", "Peptide counts", 15000, width = "100%"), title = "target threshold for peptide counts", placement = "right"),
       tipify(numericInput("EVD_mainSearchTol_num", "main search tol", 4.5, width = "100%"), title = " calibrated mass error tolerance (MQ parameter)", placement = "right"),
-      tipify(numericInput("EVD_firstSearch_outOfCalWarnSD_num", "FS outofcal warnsd", 2, width = "100%"), title = "maximum standard deviation for uncalibrated mass error distribution", placement = "right"),
+      tipify(numericInput("EVD_firstSearch_outOfCalWarnSD_num", "FS outofcal warnsd", 2, width = "100%"), title = "maximum standard deviation for uncalibrated mass error distribution [ppm]", placement = "right"),
       tipify(textInput("special_contaminants", "Contaminant and threshhold (in %)", "MYCOPLASMA: 1"), title = "additional contaminant (name within protein identifier) proportion and threshold [%] to plot", placement = "right"),
       renderUI({HTML("<br/>")}),
       renderText({"MsMs Scans: "}), 
@@ -97,8 +97,6 @@ shinyServer(function(input, output, session){
     }
     
     param <- list()
-    param$param_useMQPAR <- TRUE
-    param$add_fs_col <- 14 
     param$id_rate_bad <- input$Thresh_ID_rate[1]
     param$id_rate_great <- input$Thresh_ID_rate[2]
     param$pg_ratioLabIncThresh <- input$PG_LabelIncTresh_num
@@ -113,11 +111,9 @@ shinyServer(function(input, output, session){
     param$param_EV_PrecursorOutOfCalSD <- input$EVD_firstSearch_outOfCalWarnSD_num
     param$param_EV_PrecursorTolPPMmainSearch <- input$EVD_mainSearchTol_num
     param$param_MSMSScans_ionInjThresh <- input$MsMsScans_IonInjectionTresh_num
-    param$param_OutputFormats <- c("html", "plainPDF")
-    param$param_PageNumbers <- "on"
 
     
-    createYaml(yc = yc, path = path.new, DEBUG_PTXQC = FALSE, output = FALSE, 
+    createYaml(yc = yc, path = path.new, DEBUG_PTXQC = FALSE, 
                metrics = mets, param = param)
   }
   
@@ -323,8 +319,19 @@ shinyServer(function(input, output, session){
             HTML("<br/><br/>The code of the PTXQC package is available on Github "), ptxqcgithub,
             HTML("<br/>The code of this Shiny application is available on Github "), shinygithub)
   })
-})
+  
+  output$impressum <- renderUI({
+    tagList(img(src='BSC.png', align = "left"),
+            HTML("<br/> This web application was developed as a part of my bachelor thesis. <br/>
+            I got supervised by Dr. Chris Bielow and Dr. Sandro Andreotti (Bioinformatics Solution Center, Freie Universit?t Berlin). <br/> <br/>"),
+            tags$h4("Impressum"),
+            HTML(
+            "Kristin K?hler <br/>
+            Freie Universit?t Berlin <br/>
+            koehlek99@zedat.fu-berlin.de"))
+    
+  })
+}
 
 
-shinyApp(ui = shinyUI,server = shinyServer)
-
+shinyApp(ui,server)
