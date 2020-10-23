@@ -20,7 +20,7 @@ library(waiter)
 library(shinyBS)
 
 
-shinyUI(fluidPage(
+ui <- fluidPage(
   
   use_waiter(), 
   useShinyjs(),
@@ -93,6 +93,7 @@ shinyUI(fluidPage(
 
 
                 br(),
+                br(),
                 fluidRow(
                          column(4, 
                                 uiOutput("yamld")
@@ -104,8 +105,7 @@ shinyUI(fluidPage(
                                 uiOutput("htmld")
                                 )
                 ),
-                br(),
-                br(),
+                
                 br(),
                 fluidRow(align = "center",
                          uiOutput("newreport")
@@ -132,8 +132,9 @@ shinyUI(fluidPage(
     tabPanel("Help", fluid = TRUE, icon = icon("question-circle"),
              uiOutput("infoptxqc")),
     
-    tabPanel("About", fluid = TRUE, icon = icon("info-circle"))
+    tabPanel("About", fluid = TRUE, icon = icon("info-circle"), 
+             uiOutput("impressum"))
   
   )
-))
+)
 
