@@ -321,13 +321,17 @@ server <- function(input, output, session){
   })
   
   output$impressum <- renderUI({
-    tagList(img(src='BSC.png', align = "left"),
+    tagList(img(src='BSC.png', 
+                height = "150", 
+                width = "300", 
+                hspace = "10",
+                align = "left"),
             HTML("<br/> This web application was developed as a part of my bachelor thesis. <br/>
-            I got supervised by Dr. Chris Bielow and Dr. Sandro Andreotti (Bioinformatics Solution Center, Freie Universit?t Berlin). <br/> <br/>"),
+            I got supervised by Dr. Chris Bielow and Dr. Sandro Andreotti (Bioinformatics Solution Center, Freie Universitaet Berlin). <br/> <br/>"),
             tags$h4("Impressum"),
             HTML(
-            "Kristin K?hler <br/>
-            Freie Universit?t Berlin <br/>
+            "Kristin Koehler <br/>
+            Freie Universitaet Berlin <br/>
             koehlek99@zedat.fu-berlin.de"))
     
   })
