@@ -321,7 +321,7 @@ server <- function(input, output, session){
   })
   
   output$impressum <- renderUI({
-    tagList(img(src='BSC.png',  
+    tagList(img(src='BSC_big.png',  
                 hspace = "10",
                 align = "left"),
             HTML("<br/> This web application was developed as a part of my bachelor thesis. <br/>
