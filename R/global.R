@@ -15,35 +15,48 @@ yamlpath <- tempfile("yamldefault.yaml", tempdir())
 
 
 ##########################################create yaml##########################################################
-createYaml <- function(yc, path, param = NULL, DEBUG_PTXQC = FALSE, output = TRUE, MZTAB_MODE = FALSE, txt_files = NULL, metrics = NULL){
+
+createYaml <- function(yc, store_path, param = list(), DEBUG_PTXQC = FALSE, MZTAB_MODE = FALSE, txt_files = NULL, metrics = NULL){
   
   ##
   ## YAML default config
   ##
-  if(is.null(param)){
-    param <- list()
-    param$param_useMQPAR <- TRUE
-    param$add_fs_col <- 14 
-    param$id_rate_bad <- 20
-    param$id_rate_great <- 35
-    param$pg_ratioLabIncThresh <- 4
-    param$param_PG_intThresh <- 25
-    param$param_EV_protThresh <- 3500
-    param$param_EV_intThresh <- 23
-    param$param_EV_pepThresh <- 15000
-    param$yaml_contaminants <- list("cont_MYCO" = c(name="MYCOPLASMA", threshold=1)) # name (FASTA), threshold for % of unique peptides
-    param$param_EV_MatchingTolerance <- 1
-    param$param_evd_mbr <- "auto"
-    param$param_EV_PrecursorTolPPM <- 20
-    param$param_EV_PrecursorOutOfCalSD <- 2
-    param$param_EV_PrecursorTolPPMmainSearch <- NA
-    param$param_MSMSScans_ionInjThresh <- 10
-    param$param_OutputFormats <- c("html", "plainPDF")
-    param$param_PageNumbers <- "on"
-    
+  default_param <- list()
+  default_param$param_useMQPAR <- TRUE
+  default_param$add_fs_col <- 14 
+  default_param$id_rate_bad <- 20
+  default_param$id_rate_great <- 35
+  default_param$pg_ratioLabIncThresh <- 4
+  default_param$param_PG_intThresh <- 25
+  default_param$param_EV_protThresh <- 3500
+  default_param$param_EV_intThresh <- 23
+  default_param$param_EV_pepThresh <- 15000
+  default_param$yaml_contaminants <- list("cont_MYCO" = c(name="MYCOPLASMA", threshold=1)) # name (FASTA), threshold for % of unique peptides
+  default_param$param_EV_MatchingTolerance <- 1
+  default_param$param_evd_mbr <- "auto"
+  default_param$param_EV_PrecursorTolPPM <- 20
+  default_param$param_EV_PrecursorOutOfCalSD <- 2
+  default_param$param_EV_PrecursorTolPPMmainSearch <- NA
+  default_param$param_MSMSScans_ionInjThresh <- 10
+  default_param$param_OutputFormats <- c("html", "plainPDF")
+  default_param$param_PageNumbers <- "on"
+  
+  
+  ##
+  ## check for invalid parameters
+  ##
+  for(i in c(1:length(param))){
+    if(!names(param[i]) %in% names(default_param)) warning(paste0("Invalid parameter detected: ", names(param)[i])) 
   }
   
-  if(is.null(txt_files)) txt_files <- ""
+  ##
+  ##add missing parameters from default parameter list
+  ##
+  for(i in c(1:length(default_param))){
+    if(!names(default_param)[i] %in% names(param)) param[names(default_param)[i]] <- default_param[i]
+  }
+  
+  
   
   ## determines if a local mqpar.xml should be used to grep all YAML parameters whose name starts with "MQpar_" from the
   ## original mqpar.xml instead of the yaml.config. The "MQpar_..." param from the config
@@ -83,7 +96,7 @@ createYaml <- function(yc, path, param = NULL, DEBUG_PTXQC = FALSE, output = TRU
   param$yaml_contaminants = yc$getYAML("File$Evidence$SpecialContaminants", param$yaml_contaminants)
   
   param$param_EV_MatchingTolerance = yc$getYAML("File$Evidence$MQpar_MatchingTimeWindow_num", param$param_EV_MatchingTolerance)
-  if (param$param_useMQPAR &! MZTAB_MODE && is.null(param)) {
+  if (param$param_useMQPAR &! MZTAB_MODE && !is.null(txt_files)) {
     v = getMQPARValue(txt_files$mqpar, "matchingTimeWindow") ## will also warn() if file is missing
     if (!is.null(v)) {
       param$param_EV_MatchingTolerance = yc$setYAML("File$Evidence$MQpar_MatchingTimeWindow_num", as.numeric(v))
@@ -92,7 +105,7 @@ createYaml <- function(yc, path, param = NULL, DEBUG_PTXQC = FALSE, output = TRU
   param$param_evd_mbr = yc$getYAML("File$Evidence$MatchBetweenRuns_wA", param$param_evd_mbr)
   
   param$param_EV_PrecursorTolPPM = yc$getYAML("File$Evidence$MQpar_firstSearchTol_num", param$param_EV_PrecursorTolPPM)
-  if (param$param_useMQPAR & !MZTAB_MODE && is.null(param)) {
+  if (param$param_useMQPAR & !MZTAB_MODE && !is.null(txt_files)) {
     v = getMQPARValue(txt_files$mqpar, "firstSearchTol") ## will also warn() if file is missing
     if (!is.null(v)) {
       param$param_EV_PrecursorTolPPM = yc$setYAML("File$Evidence$MQpar_firstSearchTol_num", as.numeric(v))
@@ -103,7 +116,7 @@ createYaml <- function(yc, path, param = NULL, DEBUG_PTXQC = FALSE, output = TRU
   
   ## we do not dare to have a default, since it ranges from 6 - 4.5 ppm across MQ versions
   param$param_EV_PrecursorTolPPMmainSearch = yc$getYAML("File$Evidence$MQpar_mainSearchTol_num", param$param_EV_PrecursorTolPPMmainSearch)
-  if (param$param_useMQPAR & !MZTAB_MODE && is.null(param)) {
+  if (param$param_useMQPAR & !MZTAB_MODE && !is.null(txt_files)) {
     v = getMQPARValue(txt_files$mqpar, "mainSearchTol") ## will also warn() if file is missing
     if (!is.null(v)) {
       param$param_EV_PrecursorTolPPMmainSearch = yc$setYAML("File$Evidence$MQpar_mainSearchTol_num", as.numeric(v))
@@ -124,8 +137,8 @@ createYaml <- function(yc, path, param = NULL, DEBUG_PTXQC = FALSE, output = TRU
   ####
   ####  prepare the metrics
   ####
-  lst_qcMetrics = PTXQC:::getMetricsObjects(DEBUG_PTXQC)
-  df.meta = PTXQC:::getMetaData(lst_qcMetrics = lst_qcMetrics)
+  lst_qcMetrics = getMetricsObjects(DEBUG_PTXQC)
+  df.meta = getMetaData(lst_qcMetrics = lst_qcMetrics)
   df.meta
   ## reorder metrics (required for indexing below!)
   lst_qcMetrics_ord = lst_qcMetrics[df.meta$.id]
@@ -139,11 +152,10 @@ createYaml <- function(yc, path, param = NULL, DEBUG_PTXQC = FALSE, output = TRU
     
     ##check for shiny metrics input
     if(!is.null(metrics)){
-      if(df.meta$.id[i] %in% metrics) yc$setYAML(pname, pval)
-      else yc$setYAML(pname, (-1))
+      if(!(df.meta$.id[i] %in% metrics)) pval = -1; ## omit the metric if not listed`
     }
     
-    param_v = yc$getYAML(pname, pval)
+    param_v = yc$getYAML(pname, pval) ## read value (if present), or return `pval`
     ## update
     if (is.numeric(param_v)) {
       lst_qcMetrics_ord[[i]]$orderNr = param_v  # for some reason, lst_qcMetrics[[df.meta$.id]] does not work
@@ -152,14 +164,14 @@ createYaml <- function(yc, path, param = NULL, DEBUG_PTXQC = FALSE, output = TRU
     }
   }
   ## re-read meta (new ordering?)
-  df.meta = PTXQC:::getMetaData(lst_qcMetrics = lst_qcMetrics)
+  df.meta = getMetaData(lst_qcMetrics = lst_qcMetrics)
   ## reorder metrics (again; after param update)
   lst_qcMetrics_ord = lst_qcMetrics[df.meta$.id]
   
   ## write out the final YAML file (so users can disable metrics, if they fail)
-  yc$writeYAML(path)
+  yc$writeYAML(store_path)
   
-  if(output) return(list(param, lst_qcMetrics_ord))
+  return(list("param" = param, "lst_qcMetrics" = lst_qcMetrics_ord))
   
   
 }
