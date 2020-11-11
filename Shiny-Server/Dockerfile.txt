@@ -1,0 +1,73 @@
+# Base image https://hub.docker.com/u/rocker/
+FROM rocker/shiny:latest
+
+# system libraries of general use
+## install debian packages
+#RUN apt-get update -qq && apt-get -y --no-install-recommends install \
+ #   libxml2-dev \
+  #  libcairo2-dev \
+   # libsqlite3-dev \
+    #libmariadbd-dev \
+     #libpq-dev \
+    #libssh2-1-dev \
+    #unixodbc-dev \
+    #libcurl4-openssl-dev \
+    #libssl-dev
+
+# system libraries of general use
+RUN apt-get update && apt-get install -y \
+    sudo \
+    pandoc \
+    pandoc-citeproc \
+    libcairo2-dev \
+    libxt-dev \
+    libssl-dev \
+    libssh2-1-dev \
+    curl \
+    libcurl4-openssl-dev \
+    libxml2-dev \
+    libudunits2-0 \
+    libudunits2-dev
+
+## update system libraries
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get clean
+ 
+###### copy necessary files
+
+## renv.lock file
+COPY /app/renv.lock ./renv.lock
+
+# copy shiny-server.sh to image
+COPY shiny-server.sh /usr/bin/
+ 
+# copy shiny server config to image
+COPY shiny-server.conf  /etc/shiny-server/shiny-server.conf
+ 
+# copy the contents of app folder to image
+COPY ./app /srv/shiny-server/app/
+ 
+# install renv & restore packages
+RUN Rscript -e 'install.packages("renv")'
+RUN Rscript -e 'renv::consent(provided = TRUE)'
+RUN Rscript -e 'renv::restore()'
+RUN Rscript -e 'install.packages("devtools")'
+RUN Rscript -e 'library("devtools")'
+RUN Rscript -e 'devtools::install_github("cbielow/PTXQC", build_vignettes = TRUE, dependencies = TRUE)'
+
+# expose port
+EXPOSE 3838
+
+# allow permission for user ‘shiny’ to run
+RUN sudo chown -R shiny:shiny /srv/shiny-server
+
+# install linux programs to enable conversion of ms dos file to unix file
+RUN apt-get update && apt-get install -y dos2unix
+
+# we do this so that the shiny-server.sh file is recognized by the linux machine
+RUN dos2unix /usr/bin/shiny-server.sh && apt-get --purge remove -y dos2unix && rm -rf /var/lib/apt/lists/*
+ 
+
+# run app on container start
+CMD ["/usr/bin/shiny-server.sh"]
