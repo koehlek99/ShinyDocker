@@ -21,7 +21,7 @@ To start a Docker container exposed on port 3838 run
 
 ## Usage
 
-Once the container runs, the web application is available in the browser at http://localhost:3838/
+Once the container runs, the web application is available at http://localhost:3838/
 
 If the application aborts, logs can be accessed by copying the logs file to the host system by running 
 ```bash
