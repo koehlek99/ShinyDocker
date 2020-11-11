@@ -1,6 +1,6 @@
 # Dockerized Shiny Application for Quality Control Reports
 
-The provided Docker image enables to host a QC Shiny application based on the R package [PTXQC](https://github.com/cbielow/PTXQC) via Shiny-server. \
+The provided Docker image (available [here](https://hub.docker.com/repository/docker/bscshinydocker/qc_shiny_bsc)) enables to host a QC Shiny application based on the R package [PTXQC](https://github.com/cbielow/PTXQC) via Shiny-server. \
 All configuration files as well as the Shiny application's code can be found in the **Shiny-Server** folder. 
 
 ## Installation
