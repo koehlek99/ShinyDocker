@@ -1,12 +1,15 @@
 shinyServer(function(input, output, session){
   
+  ##increase upload file size
   options(shiny.maxRequestSize=50*1024^2)
   
+  ##check on which OS the application runs
   if(.Platform$OS.type == "windows") sep <- "\\"
   else sep <- "/"
   
   setwd(sep)
   
+  ##adjust sidebar panel title
   output$title <- renderText({
     if(input$creport) "Download files"
     else "Upload your data"
@@ -18,7 +21,7 @@ shinyServer(function(input, output, session){
     fileInput("yamlfile", "Choose yaml file")
   })
   
-  ##advanced settings
+  ##widgets for advanced settings
   output$adv.set1 <- renderUI({
     tagList(
       renderText({"Summary:"}),
@@ -27,11 +30,7 @@ shinyServer(function(input, output, session){
       
     )
   })
-  
-  
-  
-  
-  
+   
   output$adv.set2 <- renderUI({
     tagList(
       renderText({"Protein groups: "}), 
@@ -112,6 +111,7 @@ shinyServer(function(input, output, session){
   ###############################################################################
   #######################################################################################################################
   
+  ##download buttons for PDF, html and yaml
   output$pdfd <- renderUI({
     downloadButton("pdfdownload", "PDF")
   })
@@ -122,6 +122,7 @@ shinyServer(function(input, output, session){
     downloadButton("htmldownload", "html")
   })
   
+  ##create waiter object (loading screen)
   w <- Waiter$new(html = tagList(spin_6(),
                                  HTML("<br/>"),
                                  div("Creating the report can take a few minutes...")))
@@ -173,7 +174,7 @@ shinyServer(function(input, output, session){
           print(tags)
         }
         
-        ##close settings due to layout 
+        ##hide setting widgets 
         updateCheckboxInput(session, "showsets", value = 0)
         
         ##generate html output
@@ -241,8 +242,10 @@ shinyServer(function(input, output, session){
           )
         }
         
+        ##hide setting widgets
         updateCheckboxInput(session, "showsets", value = 0)
         
+        ##display html report
         output$htmlpage<-renderUI({getPage()})
         
         ##download pdf 
@@ -270,9 +273,8 @@ shinyServer(function(input, output, session){
         )
       }
       
+      ##hide widgets when report is created 
       hideElement("dtype")
-      #hideElement("dirbutton")
-      #hideElement("dir.txt")
       hideElement("file")
       hideElement("mqfiles")
       hideElement("showsets")
@@ -282,6 +284,7 @@ shinyServer(function(input, output, session){
     })
   })
   
+  ##button that opens new application 
   output$newreport <- renderUI({
     actionButton("newreportb", "Create new report")
   })
@@ -290,7 +293,7 @@ shinyServer(function(input, output, session){
     browseURL(url)
   })
   
-  
+  ##download default yaml file 
   output$yamldd <- downloadHandler(
     filename = "Default_settings_PTXQC.yaml",
     content = function(file){
@@ -298,6 +301,7 @@ shinyServer(function(input, output, session){
     }
   )
   
+  ##help tab (information)
   output$infoptxqc <- renderUI({
     cran <- a("CRAN. ", href = "https://cran.r-project.org/web/packages/PTXQC/", target = "_blank")
     ptxqcgithub <- a(" here.", href = "https://github.com/cbielow/PTXQC", target = "_blank")
@@ -315,6 +319,7 @@ shinyServer(function(input, output, session){
             HTML("<br/>The code of this Shiny application is available on Github "), shinygithub)
   })
   
+  ##about tab (impressum)
   output$impressum <- renderUI({
     tagList(img(src="BSC.png", 
                 alt = "BSC logo",
