@@ -2,19 +2,6 @@
 FROM rocker/shiny:latest
 
 # system libraries of general use
-## install debian packages
-#RUN apt-get update -qq && apt-get -y --no-install-recommends install \
- #   libxml2-dev \
-  #  libcairo2-dev \
-   # libsqlite3-dev \
-    #libmariadbd-dev \
-     #libpq-dev \
-    #libssh2-1-dev \
-    #unixodbc-dev \
-    #libcurl4-openssl-dev \
-    #libssl-dev
-
-# system libraries of general use
 RUN apt-get update && apt-get install -y \
     sudo \
     pandoc \
@@ -62,11 +49,12 @@ EXPOSE 3838
 # allow permission for user ‘shiny’ to run
 RUN sudo chown -R shiny:shiny /srv/shiny-server
 
+###not necessary if .sh file has unix lineendings
 # install linux programs to enable conversion of ms dos file to unix file
-RUN apt-get update && apt-get install -y dos2unix
+# RUN apt-get update && apt-get install -y dos2unix
 
 # we do this so that the shiny-server.sh file is recognized by the linux machine
-RUN dos2unix /usr/bin/shiny-server.sh && apt-get --purge remove -y dos2unix && rm -rf /var/lib/apt/lists/*
+# RUN dos2unix /usr/bin/shiny-server.sh && apt-get --purge remove -y dos2unix && rm -rf /var/lib/apt/lists/*
  
 
 # run app on container start
