@@ -1,28 +1,33 @@
-#list.of.packages <- c("shiny", "devtools", "dplyr", "shinyFiles", "shinythemes", "shinyjs", "magrittr", "yaml", "waiter", "shinyBS")
-#new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
-#if(length(new.packages)) install.packages(new.packages, dependencies = TRUE)
-
-#library(devtools)
-#install_github("cbielow/PTXQC", dependencies = TRUE, build_vignettes = TRUE)
-
 library(shiny)
 library(PTXQC)
 library(dplyr)
 library(magrittr)
-library(shinyFiles)
 library(shinythemes)
 library(shinyjs)
 library(yaml)
-library(shinyjs)
 library(waiter)
 library(shinyBS)
+library(htmlwidgets)
+library(digest)
 
-
-shinyUI(fluidPage(
+shinyUI(tagList(fluidPage(
   
   use_waiter(), 
   useShinyjs(),
+  tags$script(src = "text.js"),
   
+  tags$head(tags$script('
+                        var dimension = 0;
+                        $(document).on("shiny:connected", function(e) {
+                        dimension = window.innerHeight;
+                        Shiny.onInputChange("dimension", dimension);
+                        });
+                        $(window).resize(function(e) {
+                        dimension = window.innerHeight;
+                        Shiny.onInputChange("dimension", dimension);
+                        });
+                        ')
+            ),
   
   navbarPage("Proteomics Quality Control Report", theme = shinytheme("flatly"),
     
@@ -34,11 +39,28 @@ shinyUI(fluidPage(
           titlePanel(textOutput("title")),
           
           selectInput("dtype", "Data type",
-                      c("MaxQuant files", "Mztab file")),
+                      c("MaxQuant directory", "MaxQuant files", "Mztab file")),
           
+          conditionalPanel(condition = "input.dtype == 'MaxQuant directory'",
+                           tags$div(class="form-group shiny-input-container", 
+                                    tags$div(tags$label("Choose folder")),
+                                    fluidRow(
+                                      column(4, 
+                                        tags$div(tags$label("Browse...", class="btn btn-primary", tags$input(id = "fileIn", webkitdirectory = TRUE, type = "file", style="display: none;", onchange="pressed()")))
+                                        ),
+                                      column(8,
+                                        verbatimTextOutput("mqdir")
+                                        )
+                                    ),
+                                    tags$div(id="fileIn_progress", class="progress progress-striped active shiny-file-input-progress",
+                                             tags$div(class="progress-bar")
+                                    )
+                           )
+                           
+          ),
           conditionalPanel(condition = "input.dtype == 'MaxQuant files'",
                           fileInput("mqfiles", "Choose files", multiple = TRUE)
-                         ),
+          ),
           conditionalPanel(condition = "input.dtype == 'Mztab file'",
                            fileInput("file", "Choose file", accept = ".mzTab")
           ),
@@ -55,8 +77,7 @@ shinyUI(fluidPage(
                                                           max-width: 100%;
                                                        }"),
                                             uiOutput("adv.set1"),
-                                            #bsTooltip(id="adv.set1",title="Hello! This is a hover pop-up. You'll have to click to see the next one.", placement = right, trigger = "hover"),
-                                            
+
                                             fluidRow(
                                               column(6, 
                                                      uiOutput("adv.set2")
@@ -125,6 +146,7 @@ shinyUI(fluidPage(
     tabPanel("About", fluid = TRUE, icon = icon("info-circle"), 
              uiOutput("impressum"))
   
-  )
-))
+  ), 
+  HTML("<script type='text/javascript' src='getFolders.js'></script>")
+)))
 

@@ -10,7 +10,6 @@ lst_qcMetrics_ord <- gsub("qcMetric_", "", names(lst_qcMetrics[df.meta$.id]))
 
 ##########################################url, file paths####################################################
 
-url <- "http://localhost:3838/"
 yamlpath <- tempfile("yamldefault.yaml", tempdir())
 
 

@@ -21,7 +21,13 @@ shinyServer(function(input, output, session){
     fileInput("yamlfile", "Choose yaml file")
   })
   
-  ##widgets for advanced settings
+  output$mqdir <- renderText({
+    if(is.null(input$fileIn)) "No folder selected"
+    else "Folder selected"
+  })
+
+  #########################################widgets for advanced settings#############################################
+  
   output$adv.set1 <- renderUI({
     tagList(
       renderText({"Summary:"}),
@@ -30,7 +36,7 @@ shinyServer(function(input, output, session){
       
     )
   })
-   
+  
   output$adv.set2 <- renderUI({
     tagList(
       renderText({"Protein groups: "}), 
@@ -63,12 +69,9 @@ shinyServer(function(input, output, session){
   })
   
   
+  ##################################fill yaml file#######################################
   
-  #######################################################################################################################
-  ##############writing parameters into yaml file 
-  #######################################################################################################################
-  
-  build.yaml <- function(path.new){
+  build.yaml <- function(path){
     
     mets <- paste0("qcMetric_", input$metrics)
     yc = YAMLClass$new(list())
@@ -104,14 +107,13 @@ shinyServer(function(input, output, session){
     
     
     PTXQC:::createYaml(yc = yc, DEBUG_PTXQC = FALSE, 
-               metrics = mets, param = param)
-    yc$writeYAML(path.new)
+                       metrics = mets, param = param)
+    
+    yc$writeYAML(path)
   }
   
-  ###############################################################################
-  #######################################################################################################################
+  ###########################################download buttons##############################################
   
-  ##download buttons for PDF, html and yaml
   output$pdfd <- renderUI({
     downloadButton("pdfdownload", "PDF")
   })
@@ -122,177 +124,6 @@ shinyServer(function(input, output, session){
     downloadButton("htmldownload", "html")
   })
   
-  ##create waiter object (loading screen)
-  w <- Waiter$new(html = tagList(spin_6(),
-                                 HTML("<br/>"),
-                                 div("Creating the report can take a few minutes...")))
-  
-  ##creating report
-  observeEvent(input$creport, {
-    
-    observe({
-      if(input$dtype=="MaxQuant files"){
-        
-        ##copying MaxQuant files into temporary dir
-        path.old <- dirname(input$mqfiles$datapath[1])
-        path.new <- paste0(tempfile("report", tempdir(), sep))
-        dir.create(path.new)
-        file.copy(input$mqfiles$datapath, paste0(path.new, sep, input$mqfiles$name))
-        
-        ##check if .yaml file was load
-        if(!is.null(input$yamlfile)) yaml.obj <- yaml.load_file(input$yamlfile$datapath)
-        
-        ##check if settings were set manually
-        if(input$settings == "Change settings manually") {
-          build.yaml(paste0(path.new, sep, "yaml_input"))
-          yaml.obj <- yaml.load_file(paste0(path.new, sep, "yaml_input"))
-        }
-        else  yaml.obj <- list()
-        
-        #create report for MaxQuant files 
-        w$show()
-        createReport(txt_folder = path.new, mztab_file = NULL, yaml_obj = yaml.obj)
-        w$hide()
-        
-        ##function for html report output
-        getPage<-function() {
-          
-          output$created <- reactive(return(1))
-          outputOptions(output, "created", suspendWhenHidden = FALSE)
-          addResourcePath("lib", path.new)
-          
-          tags <- tags$html(tags$iframe(src = paste0("lib", sep, list.files(path = path.new, pattern = "report.*html")),
-                                        width = "100%",
-                                        height = "750",
-                                        seamless = "seamless",
-                                        scrolling = 'yes',
-                                        id = 'htmlframe',
-                                        frameBorder = 0)
-          )
-          
-          
-          print(tags)
-        }
-        
-        ##hide setting widgets 
-        updateCheckboxInput(session, "showsets", value = 0)
-        
-        ##generate html output
-        output$htmlpage<-renderUI({getPage()})
-        
-        
-        ##download pdf 
-        output$pdfdownload <- downloadHandler(
-          filename = "PTXQC_Report.pdf", 
-          content = function(file){
-            file.copy(paste0(path.new, list.files(path = path.new, pattern = "report.*pdf")), file)
-          }
-        )
-        
-        ##download .yaml 
-        output$yamldownload <- downloadHandler(
-          filename = "PTXQC.yaml", 
-          content = function(file){
-            file.copy(paste0(path.new, list.files(path = path.new, pattern = "report.*yaml")), file)
-          }
-        )
-        
-        ##download html 
-        output$htmldownload <- downloadHandler(
-          filename = "PTXQC_Report.html",
-          content = function(file){
-            file.copy(paste0(path.new, list.files(path = path.new, pattern = "report.*html")), file)
-          }
-        )
-        
-        
-        
-      } else {
-        
-        mztab_file <- input$file$datapath
-        
-        ##check if .yaml file was load
-        if(!is.null(input$yamlfile)) yaml.obj <- yaml.load_file(input$yamlfile$datapath)
-        ##check if settings were set manually
-        if(input$settings == "Change settings manually") {
-          build.yaml(paste0(dirname(input$file$datapath), sep, "yaml_input"))
-          yaml.obj <- yaml.load_file(paste0(dirname(input$file$datapath), sep, "yaml_input"))
-        }
-        else  yaml.obj <- list()
-        
-        ##creating report for mztab file
-        w$show()
-        createReport(txt_folder = NULL, mztab_file = mztab_file, yaml_obj = yaml.obj)
-        w$hide()
-        
-        
-        ##funtions for html report output
-        getPage<-function() {
-          output$created <- reactive(return(1))
-          outputOptions(output, "created", suspendWhenHidden = FALSE)
-          
-          addResourcePath("lib", dirname(input$file$datapath))
-          print(tags$iframe(src = paste0("lib", sep, list.files(path = dirname(input$file$datapath), pattern = "report.*html")), 
-                            height = 750, 
-                            width = "100%", 
-                            seamless = "seamless",
-                            scrolling = "yes",
-                            id = "htmlframe",
-                            frameBorder = 0)
-          )
-        }
-        
-        ##hide setting widgets
-        updateCheckboxInput(session, "showsets", value = 0)
-        
-        ##display html report
-        output$htmlpage<-renderUI({getPage()})
-        
-        ##download pdf 
-        output$pdfdownload <- downloadHandler(
-          filename = "PTXQC_Report.pdf",
-          content = function(file){
-            file.copy(paste0(dirname(input$file$datapath), sep, list.files(path = dirname(input$file$datapath), pattern = c("report.*pdf"))), file)
-          }
-        )
-        
-        ##download .yaml 
-        output$yamldownload <- downloadHandler(
-          filename = "PTXQC.yaml",
-          content = function(file){
-            file.copy(paste0(dirname(input$file$datapath), sep, list.files(path = dirname(input$file$datapath), pattern = c("report.*yaml"))), file)
-          }
-        )
-        
-        ##download html 
-        output$htmldownload <- downloadHandler(
-          filename = "PTXQC_Report.html",
-          content = function(file){
-            file.copy(paste0(dirname(input$file$datapath), sep, list.files(path = dirname(input$file$datapath), pattern = c("report.*html"))), file)
-          }
-        )
-      }
-      
-      ##hide widgets when report is created 
-      hideElement("dtype")
-      hideElement("file")
-      hideElement("mqfiles")
-      hideElement("showsets")
-      hideElement("choose.dir")
-      hideElement("creport")
-      
-    })
-  })
-  
-  ##button that opens new application 
-  output$newreport <- renderUI({
-    actionButton("newreportb", "Create new report")
-  })
-  
-  observeEvent(input$newreportb, {
-    browseURL(url)
-  })
-  
   ##download default yaml file 
   output$yamldd <- downloadHandler(
     filename = "Default_settings_PTXQC.yaml",
@@ -301,7 +132,163 @@ shinyServer(function(input, output, session){
     }
   )
   
-  ##help tab (information)
+  
+  ###################################create waiter object (loading screen)#################################
+  
+  w <- Waiter$new(html = tagList(spin_6(),
+                                 HTML("<br/>"),
+                                 div("Creating the report can take a few minutes...")))
+  
+  
+  #################################################reports#################################################
+  
+  observeEvent(input$creport, {
+    
+    observe({
+      
+      ##########################################yaml file##################################################
+      
+      ##check if .yaml file was load
+      if(!is.null(input$yamlfile)) yaml.obj <- yaml.load_file(input$yamlfile$datapath)
+      
+      ##check if settings were set manually
+      else if(input$showsets == 1 && input$settings == "Change settings manually") {
+        yaml.manual <- paste0(tempfile("manualsettings", tempdir()), ".yaml")
+        build.yaml(yaml.manual)
+        yaml.obj <- yaml.load_file(yaml.manual)
+      }
+      ##no yaml
+      else  yaml.obj <- list()
+      
+      
+      ###########################################hide elements#############################################
+      
+      hideElement("adv.set1")
+      hideElement("adv.set2")
+      hideElement("adv.set3")
+      hideElement("metrics")
+      hideElement("fileIn")
+      hideElement("dtype")
+      hideElement("file")
+      hideElement("mqfiles")
+      hideElement("showsets")
+      hideElement("settings")
+      hideElement("choose.dir")
+      hideElement("creport")
+      hideElement("yaml.load")
+      
+      
+      ########################################createReport()###############################################
+      
+      if(input$dtype=="MaxQuant directory"){
+        
+        mq.dirpaths <- input$fileIn
+        path.old <- dirname(mq.dirpaths$datapath[1])
+        path <- paste0(tempfile("report", tempdir(), sep))
+        dir.create(path)
+        file.copy(mq.dirpaths$datapath, paste0(path, sep, mq.dirpaths$name))
+        list.files(path)
+        
+        #create report for MaxQuant directory 
+        w$show()
+        createReport(txt_folder = path, mztab_file = NULL, yaml_obj = yaml.obj)
+        w$hide()
+        
+      } 
+      if(input$dtype=="MaxQuant files"){
+        
+        ##copying MaxQuant files into temporary dir
+        path.old <- dirname(input$mqfiles$datapath[1])
+        path <- paste0(tempfile("report", tempdir(), sep))
+        dir.create(path)
+        file.copy(input$mqfiles$datapath, paste0(path, sep, input$mqfiles$name))
+        
+        #create report for MaxQuant files 
+        w$show()
+        createReport(txt_folder = path, mztab_file = NULL, yaml_obj = yaml.obj)
+        w$hide()
+        
+      }  
+      if(input$dtype=="Mztab file"){
+        
+        mztab_file <- input$file$datapath 
+        path <- dirname(mztab_file)
+        
+        ##creating report for mztab file
+        w$show()
+        createReport(txt_folder = NULL, mztab_file = mztab_file, yaml_obj = yaml.obj)
+        w$hide()
+        
+      }
+      
+      
+      ############################################html output##############################################
+      
+      ##function for html report output
+      getPage<-function() {
+        
+        output$created <- reactive(return(1))
+        outputOptions(output, "created", suspendWhenHidden = FALSE)
+        addResourcePath("lib", path)
+        
+        tags <- tags$html(tags$iframe(src = paste0("lib", sep, list.files(path = path, pattern = "report.*html")),
+                                      width = "100%",
+                                      height = as.numeric(input$dimension) - 100,
+                                      seamless = "seamless",
+                                      scrolling = 'yes',
+                                      id = 'htmlframe',
+                                      frameBorder = 0)
+        )
+        
+        
+        print(tags)
+      }
+      
+      
+      ##generate html output
+      output$htmlpage<-renderUI({getPage()})
+      
+      
+      ################################################download buttons#############################################
+      
+      ##download pdf 
+      output$pdfdownload <- downloadHandler(
+        filename = "PTXQC_Report.pdf", 
+        content = function(file){
+          file.copy(paste0(path, list.files(path = path, pattern = "report.*pdf")), file)
+        }
+      )
+      
+      ##download .yaml 
+      output$yamldownload <- downloadHandler(
+        filename = "PTXQC.yaml", 
+        content = function(file){
+          file.copy(paste0(path, list.files(path = path, pattern = "report.*yaml")), file)
+        }
+      )
+      
+      ##download html 
+      output$htmldownload <- downloadHandler(
+        filename = "PTXQC_Report.html",
+        content = function(file){
+          file.copy(paste0(path, list.files(path = path, pattern = "report.*html")), file)
+        }
+      )
+      
+    })
+  })
+  
+  
+  #############################################new application button###########################################
+  
+  output$newreport <- renderUI({
+    actionButton("newreportb", a("Create new report", href="#", target = "_blank", style = "color: #FFFFFF"))
+  })
+  
+  
+  
+  ##############################################help tab (information)##########################################
+  
   output$infoptxqc <- renderUI({
     cran <- a("CRAN. ", href = "https://cran.r-project.org/web/packages/PTXQC/", target = "_blank")
     ptxqcgithub <- a(" here.", href = "https://github.com/cbielow/PTXQC", target = "_blank")
@@ -310,8 +297,8 @@ shinyServer(function(input, output, session){
     yamldefault <- downloadLink("yamldd", "here. ")
     
     tagList(HTML("This website allows users of MaxQuant (from .txt files) and OpenMS (from .mzTab files) to generate quality control reports in Html/PDF format using the R package PTXQC.
-                  In case of processing MaxQuant output, please provide the following .txt files: <br/>
-                  Evidence,  MsMs,  MsMsScans,  Parameters,  ProteinGroups,  Summary and Mqpar <br/> <br/>
+                 In case of processing MaxQuant output, please provide the following .txt files: <br/>
+                 Evidence,  MsMs,  MsMsScans,  Parameters,  ProteinGroups,  Summary and Mqpar <br/> <br/>
                  Advanced settings for creating the report can be either set manually or as parameters in a configuration yaml file. 
                  A yaml file with default parameters can be downloaded "), yamldefault,
             HTML("<br/><br/>More information about the PTXQC package, a manual and vignettes can be found on "), cran,
@@ -319,7 +306,9 @@ shinyServer(function(input, output, session){
             HTML("<br/>The code of this Shiny application is available on Github "), shinygithub)
   })
   
-  ##about tab (impressum)
+  
+  ################################################about tab (impressum)##########################################
+  
   output$impressum <- renderUI({
     tagList(img(src="BSC.png", 
                 alt = "BSC logo",
@@ -328,7 +317,7 @@ shinyServer(function(input, output, session){
                 hspace = "10",
                 align = "left"),
             HTML("<br/>    This web application was developed as a part of my bachelor thesis. <br/>
-                     I got supervised by Dr. Chris Bielow and Dr. Sandro Andreotti (Bioinformatics Solution Center, Freie Universitaet Berlin). <br/> <br/>"),
+                 I got supervised by Dr. Chris Bielow and Dr. Sandro Andreotti (Bioinformatics Solution Center, Freie Universitaet Berlin). <br/> <br/>"),
             tags$h4("Impressum"),
             HTML(
               "Kristin Koehler <br/>
