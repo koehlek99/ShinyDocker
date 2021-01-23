@@ -212,7 +212,7 @@ shinyServer(function(input, output, session){
       if(input$dtype=="Mztab file"){
         
         mztab_file <- input$file$datapath 
-        path <- dirname(mztab_file)
+        path <- paste0(dirname(mztab_file), sep)
         
         ##creating report for mztab file
         w$show()
