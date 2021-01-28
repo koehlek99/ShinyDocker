@@ -1,11 +1,11 @@
-# Dockerized Shiny Application for Quality Control Reports
+# Dockerized Shiny Application 
 
-The provided Dockerfile serves as a template for a Docker image that enables to host a QC Shiny application based on the R package [PTXQC](https://github.com/cbielow/PTXQC) via Shiny-server. \
-All configuration files as well as the Shiny application's code can be found in the **Shiny-Server** folder. 
+The provided Dockerfile serves as a template for a Docker image that enables to host a Shiny application via Shiny-server. \
+All configuration files can be found in the **Shiny-Server** folder. To build a Docker running your Shiny application, copy its code to the **Shiny-server** folder as well.
 
 ## Installation
 
-To build a new Docker image run the following command withing the **Shiny-Server** folder 
+To build a new Docker image run the following command within the **Shiny-Server** folder 
 
 ```bash
 > docker build -t qcshiny_image -f Dockerfile.txt .
